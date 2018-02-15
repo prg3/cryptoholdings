@@ -1,0 +1,20 @@
+var REFRESH = 5000 ;
+var App = angular.module('App', []);
+
+mycoins = function($myCoins) {};
+ 
+App.controller('CoinsCtrl', function ($scope, $http) {
+ loadData = function () {
+  $http.get('coins.json')
+       .then(function(res){
+          $scope.coins = res.data;                
+        });
+ }
+
+ var mainloop = function () {
+	loadData();
+ }
+
+ mainloop();
+ setInterval( mainloop, REFRESH );
+});

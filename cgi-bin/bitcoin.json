@@ -1,0 +1,69 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
+
+# enable debugging
+import cgitb
+cgitb.enable()
+
+
+import urllib
+import xml.etree.ElementTree as ET
+import json
+import pprint
+import urllib2
+import cgi
+import re
+pp = pprint.PrettyPrinter(indent=4)
+print "Content-Type: text/html;charset=utf-8"
+print ""
+
+currencies = {}
+BTC = {}
+# Currencies array = [ name, API URL, ,value in btc, amount, total in btc ]
+currencies['BTC'] = [ 'Bitcoin', ['virtexCAD', 'mtgoxUSD', 'mtgoxEUR', 'mtgoxAUD'] ,1.000,0,0]
+
+form = cgi.FieldStorage()
+
+#myholdings={ 'BTC': float(0)}
+source = {}
+myholdings= {}
+for currency in currencies:
+	source[currency] = ""
+	myholdings[currency] = float('0.0')
+
+for i in form.list:
+	if i.name in currencies.keys():
+		myholdings[i.name] = float(i.value)
+
+
+totalBTC = myholdings['BTC']
+currencies['BTC'][3] = myholdings['BTC']
+currencies['BTC'][4] = myholdings['BTC']
+
+
+for currency in myholdings:
+	for exchange in currencies[currency][1]:
+
+		ticker = "%s.%s" %(currency, exchange)
+       		url='http://graphite.internal/render?target=%s\&rawData=true\&format=json' %(ticker)
+		exchangedata=json.loads(urllib.urlopen(url).read())
+
+		lastprice=None
+		n=len(exchangedata[0]['datapoints']) -1
+
+        	while lastprice is None:
+                	lastprice = exchangedata[0]['datapoints'][n][0]
+                	n = n-1
+
+		if currencies[currency][2] < lastprice:
+			currencies[currency][2] = lastprice
+			source[currency] = exchange
+		fiat = ""
+		if currency is 'BTC':
+			for i in exchange:
+				if i.isupper():
+					fiat += i
+
+			BTC[exchange] = [exchange, fiat, lastprice, 0] 
+
+print json.dumps(BTC)

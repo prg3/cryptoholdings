@@ -1,0 +1,79 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
+
+# enable debugging
+import cgitb
+cgitb.enable()
+
+
+import urllib
+import xml.etree.ElementTree as ET
+import json
+import pprint
+import urllib2
+import cgi
+import re
+pp = pprint.PrettyPrinter(indent=4)
+print "Content-Type: text/html;charset=utf-8"
+print ""
+
+currencies = {}
+BTC = {}
+# Currencies array = [ name, API URL, ,value in btc, amount, total in btc ]
+currencies['SC'] = [ 'Solidcoin', ['MCXNOW'] ,0,0,0]
+currencies['MNC'] = [ 'Mincoin', ['MCXNOW']  ,0,0,0]
+currencies['WDC'] = [ 'Worldcoin', ['MCXNOW'],0,0,0]
+currencies['LTC'] = [ 'Litecoin', ['MCXNOW', 'BTCE'] ,0,0,0]
+currencies['DVC'] = [ 'Devcoin', ['MCXNOW'] ,0,0,0]
+currencies['BTC'] = [ 'Bitcoin', ['virtexCAD', 'mtgoxUSD', 'mtgoxEUR', 'mtgoxAUD'] ,1.000,0,0]
+currencies['NVC'] = [ 'Novacoin', ['BTCE'] ,0,0,0]
+currencies['PPC'] = [ 'PPCoin', ['BTCE'] ,0,0,0]
+currencies['TRC'] = [ 'Terracoin', ['BTCE'] ,0,0,0]
+
+form = cgi.FieldStorage()
+
+#myholdings={ 'BTC': float(0)}
+source = {}
+myholdings= {}
+for currency in currencies:
+	source[currency] = ""
+	myholdings[currency] = float('0.0')
+
+for i in form.list:
+	if i.name in currencies.keys():
+		myholdings[i.name] = float(i.value)
+
+
+totalBTC = myholdings['BTC']
+currencies['BTC'][3] = myholdings['BTC']
+currencies['BTC'][4] = myholdings['BTC']
+
+
+for currency in myholdings:
+	for exchange in currencies[currency][1]:
+
+		ticker = "%s.%s" %(currency, exchange)
+       		url='http://graphite.internal/render?target=%s\&rawData=true\&format=json' %(ticker)
+		exchangedata=json.loads(urllib.urlopen(url).read())
+
+		lastprice=None
+		n=len(exchangedata[0]['datapoints']) -1
+
+        	while lastprice is None:
+                	lastprice = exchangedata[0]['datapoints'][n][0]
+                	n = n-1
+
+		if currencies[currency][2] < lastprice:
+			currencies[currency][2] = lastprice
+			source[currency] = exchange
+		if currency is 'BTC':
+			BTC[exchange] = lastprice
+
+for currency in source:
+	if currency is not 'BTC':
+		currencies[currency][3] = myholdings[currency]
+		currencies[currency][4] = float(currencies[currency][2]) * float(currencies[currency][3])
+		totalBTC += currencies[currency][4]
+
+
+print json.dumps(currencies)

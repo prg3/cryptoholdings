@@ -1,0 +1,38 @@
+<!doctype html>
+<html ng-app="App" >
+<head>
+  <meta charset="utf-8">
+  <title>Crypto Coin Calculator</title>
+  <script>document.write("<base href=\"" + document.location + "\" />");</script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.2/angular.js"></script>
+  <script src="app.js"></script>
+</head>
+<body ng-controller="CoinsCtrl">
+<table>
+<tr><th width=20%>Currency Name<th>Amount</th><th>Value in BTC</th><th width=15%>Rate</th><th width=10%>Source</th></tr>
+	<tr><td align=right>Bitcoin</td>
+	<td align=right><input type="text" ng-model="bitcoins" ng-change=updateTotal()></td>
+	<td align=right>{{bitcoins}}</td>
+	</tr>
+	<tr ng-repeat="coin in altcoins">
+	<td align=right>{{coin.0}}</td>
+	<td align=right>
+		<input type='text' value={{coin.3}} ng-model="value" ng-change="updateCoin(coin, value)">
+	</td>
+	<td align=right>{{coin.4 | number:10}}</td>
+	<td align=right>{{coin.2 | number:10}}</td>
+	<td>{{coin.1.0}}</td>
+	</tr>
+<tr><td></td><td>Total (BTC)</td><td>{{total | number:4}}</td></tr>
+
+<tr><td></td></tr>
+<tr ng-repeat="currency in btc">
+<td></td><td>Total ({{currency.1}})</td><td>{{currency.3 | currency }}</td><td align=right>{{currency.2 | number:4}}</td><td>{{currency.0}}</td>
+</tr>
+</table><br>
+<input type='submit' value='Refresh'><Br>
+This uses last values, not calculating actual total earnings if all are sold at this price<br>
+Source is selected as the highest available price from available exchanges<br>
+Data updates every minute<br>
+</form>
+</body></html>
